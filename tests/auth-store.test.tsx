@@ -24,6 +24,26 @@ function AuthProbe() {
   );
 }
 
+function AuthUpdater() {
+  const { updateUser, user } = useAuth();
+
+  return (
+    <div>
+      <button
+        onClick={() =>
+          updateUser({
+            profilePhotoDataUrl: "data:image/png;base64,updated"
+          })
+        }
+        type="button"
+      >
+        update-user
+      </button>
+      <span>{user?.profilePhotoDataUrl ?? "no-photo"}</span>
+    </div>
+  );
+}
+
 describe("AuthProvider", () => {
   afterEach(() => {
     cleanup();
@@ -37,7 +57,8 @@ describe("AuthProvider", () => {
       id: "admin-1",
       email: "admin@cinemavault.local",
       displayName: "CinemaVault Admin",
-      role: "ADMIN"
+      role: "ADMIN",
+      profilePhotoDataUrl: null
     });
 
     render(
@@ -61,7 +82,8 @@ describe("AuthProvider", () => {
         id: "admin-1",
         email: "admin@cinemavault.local",
         displayName: "CinemaVault Admin",
-        role: "ADMIN"
+        role: "ADMIN",
+        profilePhotoDataUrl: null
       })
     );
     getCurrentUser.mockRejectedValue(new Error("expired"));
@@ -80,5 +102,44 @@ describe("AuthProvider", () => {
 
     expect(localStorage.getItem("cinemavault-token")).toBeNull();
     expect(localStorage.getItem("cinemavault-user")).toBeNull();
+  });
+
+  it("updates the cached user payload without replacing the whole session", async () => {
+    localStorage.setItem("cinemavault-token", "valid-token");
+    localStorage.setItem(
+      "cinemavault-user",
+      JSON.stringify({
+        id: "member-1",
+        email: "member@cinemavault.local",
+        displayName: "Cinema Member",
+        role: "USER",
+        profilePhotoDataUrl: null
+      })
+    );
+    getCurrentUser.mockResolvedValue({
+      id: "member-1",
+      email: "member@cinemavault.local",
+      displayName: "Cinema Member",
+      role: "USER",
+      profilePhotoDataUrl: null
+    });
+
+    render(
+      <AuthProvider>
+        <AuthUpdater />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "update-user" })).toBeInTheDocument();
+    });
+
+    screen.getByRole("button", { name: "update-user" }).click();
+
+    await waitFor(() => {
+      expect(screen.getByText("data:image/png;base64,updated")).toBeInTheDocument();
+    });
+
+    expect(localStorage.getItem("cinemavault-user")).toContain("data:image/png;base64,updated");
   });
 });

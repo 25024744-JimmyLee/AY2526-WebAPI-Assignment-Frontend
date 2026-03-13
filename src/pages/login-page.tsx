@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import { login } from "../api/auth-api";
@@ -19,7 +19,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { setSession } = useAuth();
   const [serverError, setServerError] = useState("");
-  const redirectTarget = (location.state as { from?: string } | null)?.from ?? "/admin";
+  const redirectTarget = (location.state as { from?: string } | null)?.from;
 
   const {
     formState: { errors, isSubmitting },
@@ -42,7 +42,7 @@ export function LoginPage() {
         token: response.token,
         user: response.user
       });
-      navigate(redirectTarget, { replace: true });
+      navigate(redirectTarget ?? (response.user.role === "ADMIN" ? "/admin" : "/account"), { replace: true });
     } catch {
       setServerError("Login failed. Start the backend API and verify the credentials.");
     }
@@ -51,22 +51,22 @@ export function LoginPage() {
   return (
     <section className="auth-layout">
       <article className="auth-intro">
-        <p className="eyebrow">Editorial access</p>
-        <h1>Enter the archive control room.</h1>
+        <p className="eyebrow">CinemaVault access</p>
+        <h1>Sign in as a member or step into the editorial desk.</h1>
         <p className="page-copy page-copy--light">
-          Administrators use this entry point to publish titles, refine metadata, and keep the public catalogue consistent with the backend record.
+          Members track favourites, watch progress, and interest messages. Administrators use the same secure gateway before managing the live catalogue.
         </p>
         <div className="auth-intro__meta">
           <span>JWT login</span>
-          <span>Protected routes</span>
+          <span>Member account</span>
           <span>Role-based flow</span>
         </div>
       </article>
 
       <section className="stack auth-card">
         <div>
-          <p className="eyebrow eyebrow--dark">Admin login</p>
-          <h2>Sign in to continue</h2>
+          <p className="eyebrow eyebrow--dark">Secure sign-in</p>
+          <h2>Continue to your workspace</h2>
         </div>
 
         <form className="stack auth-form" onSubmit={onSubmit}>
@@ -88,6 +88,17 @@ export function LoginPage() {
             {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
+
+        <p className="inline-text">
+          Need an account?{" "}
+          <Link className="text-link" to="/signup">
+            Member sign up
+          </Link>
+          {" · "}
+          <Link className="text-link" to="/register-admin">
+            Admin register
+          </Link>
+        </p>
       </section>
     </section>
   );

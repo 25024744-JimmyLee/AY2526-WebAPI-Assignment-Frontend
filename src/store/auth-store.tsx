@@ -10,6 +10,7 @@ type AuthContextValue = {
   user: AuthUser | null;
   setSession: (value: { token: string; user: AuthUser }) => void;
   setUser: (value: AuthUser | null) => void;
+  updateUser: (value: Partial<AuthUser>) => void;
   logout: () => void;
 };
 
@@ -23,9 +24,7 @@ type AuthProviderProps = {
 };
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [token, setTokenState] = useState<string | null>(() => localStorage.getItem(storageKey));
-  const [isRestoringSession, setIsRestoringSession] = useState(() => Boolean(localStorage.getItem(storageKey)));
-  const [user, setUserState] = useState<AuthUser | null>(() => {
+  const readStoredUser = () => {
     const rawValue = localStorage.getItem(userStorageKey);
 
     if (!rawValue) {
@@ -38,7 +37,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.removeItem(userStorageKey);
       return null;
     }
-  });
+  };
+
+  const [token, setTokenState] = useState<string | null>(() => localStorage.getItem(storageKey));
+  const [isRestoringSession, setIsRestoringSession] = useState(() => Boolean(localStorage.getItem(storageKey)));
+  const [user, setUserState] = useState<AuthUser | null>(() => readStoredUser());
 
   useEffect(() => {
     let isCancelled = false;
@@ -102,6 +105,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       setUserState(value);
+    },
+    updateUser: (value) => {
+      setUserState((currentUser) => {
+        if (!currentUser) {
+          return currentUser;
+        }
+
+        const nextUser = {
+          ...currentUser,
+          ...value
+        };
+        localStorage.setItem(userStorageKey, JSON.stringify(nextUser));
+        return nextUser;
+      });
     },
     logout: () => {
       localStorage.removeItem(storageKey);

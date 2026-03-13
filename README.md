@@ -1,63 +1,41 @@
 # CinemaVault Frontend
 
-## Overview
-CinemaVault Frontend is a React TypeScript single-page application for the CinemaVault coursework project. It provides public film discovery, authenticated administrator workflows, and a dedicated API integration layer for the companion backend repository.
+CinemaVault Frontend 是本作業的 React TypeScript 單頁應用，提供公開電影目錄、會員片庫、管理員工作台，以及與後端 API 的整合。
 
-## Screens and Features
-- Public home page with search and filter controls
-- Film details page for individual catalogue entries
-- Administrator login flow
-- Protected admin dashboard with create, edit, and delete actions
-- Add film and edit film forms with validation
-- Loading, empty, and error states for API-backed screens
-- Session restore on app boot via `/api/auth/me`
+## 已實作畫面與流程
+- 公開首頁：搜尋、類型篩選、電影卡片清單
+- 電影詳情頁：完整片單資訊、擴充 OMDB 資料
+- 會員註冊與登入
+- 管理員註冊與登入
+- 會員帳戶頁：頭像上傳、收藏、待看、已觀看、訊息歷史
+- 電影詳情頁內的收藏、待看、已觀看與訊息送出操作
+- 管理員後台：新增、編輯、刪除電影，查看會員訊息，快速回覆，觸發 OMDB 同步，查看社群公告歷史
 
-## Tech Stack
+## 技術棧
 - React
 - TypeScript
 - Vite
 - React Router
 - Axios
-- React Hook Form
 - TanStack Query
+- React Hook Form
+- Zod
 - Vitest + Testing Library
 
-## Folder Structure
-```text
-src/
-  api/
-  components/
-  layouts/
-  pages/
-  store/
-  types/
-tests/
-public/
-```
+## 主要路由
+| Route | 說明 |
+|------|------|
+| `/` | 公開電影目錄 |
+| `/films/:filmId` | 電影詳情 |
+| `/login` | 會員 / 管理員登入 |
+| `/signup` | 一般會員註冊 |
+| `/register-admin` | 管理員註冊 |
+| `/account` | 會員帳戶與個人片庫 |
+| `/admin` | 管理員工作台 |
+| `/admin/films/new` | 新增電影 |
+| `/admin/films/:filmId/edit` | 編輯電影 |
 
-## Routing Design
-- `/` renders the public film catalogue
-- `/films/:id` shows a single film record
-- `/login` handles administrator access
-- `/admin`, `/admin/films/new`, and `/admin/films/:id/edit` are protected routes
-- `*` renders a branded not-found screen
-
-## State Management
-- Authentication state is managed with a React context store in `src/store/auth-store.tsx`
-- Film fetching and mutations use the API client layer and route-level component state
-- Protected routes wait for session restoration before deciding whether to redirect
-
-## API Integration
-- `src/api/http.ts` centralises Axios configuration
-- `src/api/auth-api.ts` handles login and current-user requests
-- `src/api/films-api.ts` handles list, detail, create, update, and delete operations
-
-## Authentication Flow
-- Login stores the access token and safe user payload in `localStorage`
-- App boot checks for an existing token and calls `/api/auth/me`
-- Invalid tokens are cleared automatically and protected routes redirect to `/login`
-
-## Running the Project
+## 環境設定
 ```bash
 npm install
 cp .env.example .env
@@ -66,23 +44,46 @@ npm run build
 npm run dev
 ```
 
-## Environment Variable
-- `VITE_API_BASE_URL`: backend API base URL, for example `http://localhost:4000`
+`.env.example` 內最重要的設定：
 
-## Testing
-- `Vitest` runs component and auth-store tests
-- API calls are mocked in tests so UI behaviour can be verified without a live backend
+```env
+VITE_API_BASE_URL=http://localhost:4000
+```
 
-## Deployment
-- Build output is generated with `npm run build`
-- Configure `VITE_API_BASE_URL` to point at the deployed backend API before publishing the static bundle
+請把它指向後端 API 根位址。
 
-## Known Limitations
-- Session persistence currently uses `localStorage`, not HTTP-only cookies
-- There is no pagination yet on the catalogue view
-- Swagger UI is not surfaced in the frontend; API documentation remains in the backend repo
+## API 整合
+- `src/api/auth-api.ts`
+  會員註冊、管理員註冊、登入、目前使用者
+- `src/api/films-api.ts`
+  電影清單、單筆查詢、建立、更新、刪除
+- `src/api/account-api.ts`
+  頭像、收藏、待看、已觀看
+- `src/api/messages-api.ts`
+  會員訊息與管理員回覆
+- `src/api/social-api.ts`
+  社群公告歷史與 OMDB 同步
 
-## Future Improvements
-- Add richer search facets and pagination controls
-- Add optimistic UI updates for admin actions
-- Add route-level integration tests for CRUD workflows
+## 測試
+```bash
+npm test
+npm run build
+```
+
+目前包含：
+- App 基本渲染與公開入口驗證
+- Auth store 的 session restore 與失效 token 清理
+
+## 與後端對應的作業功能
+- 公開瀏覽 / 搜尋 / 篩選電影
+- 一般會員註冊與個人片庫
+- 管理員註冊、登入與電影 CRUD
+- 電影詳情頁直接傳送訊息給管理員
+- 個人頭像上傳
+- OMDB 補充資料同步後在前端顯示
+- 新電影社群公告歷史查看
+
+## 限制
+- 頭像目前以 data URL 傳輸與顯示，未串接獨立檔案儲存服務
+- 社群公告與 OMDB 需要後端提供 webhook / API key 才會有外部整合結果
+- OAuth 與完整社交功能未納入目前版本

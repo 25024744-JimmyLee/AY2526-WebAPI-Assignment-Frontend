@@ -13,7 +13,9 @@ export async function listFilms(filters: FilmFilters = {}) {
   const response = await http.get<FilmListResponse>("/api/films", {
     params: {
       title: filters.title || undefined,
-      genre: filters.genre && filters.genre !== "All" ? filters.genre : undefined
+      genre: filters.genre && filters.genre !== "All" ? filters.genre : undefined,
+      year: filters.year || undefined,
+      rating: filters.rating || undefined
     }
   });
   return response.data.items;

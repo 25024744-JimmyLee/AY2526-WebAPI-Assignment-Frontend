@@ -60,7 +60,7 @@ export function EditFilmPage() {
           <p className="eyebrow eyebrow--dark">Edit record</p>
           <h1>Refine catalogue entry</h1>
           <p className="page-copy">
-            Current record id: {filmId}. This page is designed for structured editing once film data is fetched from the backend.
+            Current record id: {filmId}. Update the live record here, then return to the dashboard to review OMDB sync state, member messages, and announcement history.
           </p>
         </div>
       </section>

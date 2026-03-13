@@ -8,6 +8,14 @@ export type Film = {
   rating: number;
   runtimeMinutes: number;
   curatorNote: string;
+  posterUrl?: string | null;
+  plot?: string | null;
+  cast?: string | null;
+  omdbId?: string | null;
+  externalRating?: number | null;
+  metadataSource?: string | null;
+  metadataSyncedAt?: string | null;
+  announcementStatus?: "SENT" | "SKIPPED" | "FAILED" | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -15,6 +23,8 @@ export type Film = {
 export type FilmFilters = {
   title?: string;
   genre?: string;
+  year?: number;
+  rating?: number;
 };
 
 export type FilmPayload = {

@@ -132,9 +132,9 @@ export function HomePage() {
           <p>The admin area opens after real authentication instead of a token-only shell.</p>
         </article>
         <article className="spotlight-strip__card">
-          <p className="eyebrow eyebrow--dark">Next step</p>
-          <h3>Editorial forms are wired for create and edit</h3>
-          <p>The remaining work is mostly backend persistence, not frontend plumbing.</p>
+          <p className="eyebrow eyebrow--dark">Member experience</p>
+          <h3>Account tools extend the catalogue into a personal cinema desk</h3>
+          <p>Members can now save favourites, manage watch status, upload a profile image, and message the administrators.</p>
         </article>
       </section>
     </section>

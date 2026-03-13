@@ -4,6 +4,7 @@ import { useAuth } from "../store/auth-store";
 
 export function Navbar() {
   const { isAuthenticated, logout, user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <header className="navbar">
@@ -18,9 +19,25 @@ export function Navbar() {
         <Link className="navbar__link" to="/">
           Browse
         </Link>
-        <Link className="navbar__link" to="/admin">
-          Admin
-        </Link>
+        {isAuthenticated ? (
+          <Link className="navbar__link" to="/account">
+            Account
+          </Link>
+        ) : (
+          <Link className="navbar__link" to="/signup">
+            Sign up
+          </Link>
+        )}
+        {isAdmin ? (
+          <Link className="navbar__link" to="/admin">
+            Admin
+          </Link>
+        ) : null}
+        {!isAuthenticated ? (
+          <Link className="navbar__link" to="/register-admin">
+            Admin register
+          </Link>
+        ) : null}
         {user ? <span className="navbar__user">{user.displayName}</span> : null}
         {isAuthenticated ? (
           <button className="button-link" onClick={logout} type="button">
@@ -28,7 +45,7 @@ export function Navbar() {
           </button>
         ) : (
           <Link className="button-link" to="/login">
-            Admin login
+            Sign in
           </Link>
         )}
       </nav>

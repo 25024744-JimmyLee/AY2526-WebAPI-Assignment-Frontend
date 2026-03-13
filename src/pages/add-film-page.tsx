@@ -35,7 +35,7 @@ export function AddFilmPage() {
           <p className="eyebrow eyebrow--dark">Create record</p>
           <h1>Add a new film to the archive.</h1>
           <p className="page-copy">
-            The layout is already structured like a real editorial form so the final CRUD integration can drop into place without redesign work.
+            Fill in the core catalogue fields, save the record, and continue with metadata sync or editorial refinement from the admin workspace.
           </p>
         </div>
       </section>

@@ -1,12 +1,22 @@
 import { http } from "./http";
 import type { AuthUser } from "../types/auth";
 
-type LoginPayload = {
+export type LoginPayload = {
   email: string;
   password: string;
 };
 
-type LoginResponse = {
+export type RegisterPayload = {
+  email: string;
+  password: string;
+  displayName: string;
+};
+
+export type AdminRegisterPayload = RegisterPayload & {
+  adminCode: string;
+};
+
+type AuthResponse = {
   token: string;
   user: AuthUser;
 };
@@ -16,7 +26,20 @@ type CurrentUserResponse = {
 };
 
 export async function login(payload: LoginPayload) {
-  const response = await http.post<LoginResponse>("/api/auth/login", payload);
+  const response = await http.post<AuthResponse>("/api/auth/login", payload);
+  return response.data;
+}
+
+export async function register(payload: RegisterPayload) {
+  const response = await http.post<AuthResponse>("/api/auth/register", payload);
+  return response.data;
+}
+
+export async function registerAdmin(payload: AdminRegisterPayload) {
+  const response = await http.post<AuthResponse>("/api/auth/register-admin", {
+    ...payload,
+    adminRegistrationCode: payload.adminCode
+  });
   return response.data;
 }
 

@@ -16,4 +16,12 @@ describe("App", () => {
 
     expect(screen.getByRole("link", { name: "CinemaVault" })).toBeInTheDocument();
   });
+
+  it("exposes the public entry points for member and admin onboarding", () => {
+    render(<App />);
+
+    expect(screen.getAllByRole("link", { name: "Sign up" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "Admin register" }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "Sign in" }).length).toBeGreaterThan(0);
+  });
 });
