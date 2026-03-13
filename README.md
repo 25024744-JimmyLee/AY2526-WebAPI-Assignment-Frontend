@@ -60,10 +60,14 @@ public/
 ## Running the Project
 ```bash
 npm install
+cp .env.example .env
 npm test
 npm run build
 npm run dev
 ```
+
+## Environment Variable
+- `VITE_API_BASE_URL`: backend API base URL, for example `http://localhost:4000`
 
 ## Testing
 - `Vitest` runs component and auth-store tests
