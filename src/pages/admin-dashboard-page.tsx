@@ -2,8 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { deleteFilm, listFilms } from "../api/films-api";
-import { listMessages, replyToMessage } from "../api/messages-api";
-import { listSocialPosts, syncFilmFromOmdb } from "../api/social-api";
 import { useAuth } from "../store/auth-store";
 
 export function AdminDashboardPage() {
@@ -20,30 +18,6 @@ export function AdminDashboardPage() {
       await queryClient.invalidateQueries({ queryKey: ["films"] });
     }
   });
-  const messagesQuery = useQuery({
-    queryKey: ["admin-messages"],
-    queryFn: () => listMessages(token ?? ""),
-    enabled: Boolean(token)
-  });
-  const socialQuery = useQuery({
-    queryKey: ["social-posts"],
-    queryFn: () => listSocialPosts(token ?? ""),
-    enabled: Boolean(token)
-  });
-  const replyMutation = useMutation({
-    mutationFn: ({ messageId, body }: { messageId: string; body: string }) =>
-      replyToMessage(token ?? "", messageId, { body }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin-messages"] });
-    }
-  });
-  const omdbMutation = useMutation({
-    mutationFn: (filmId: string) => syncFilmFromOmdb(token ?? "", filmId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin-films"] });
-      await queryClient.invalidateQueries({ queryKey: ["films"] });
-    }
-  });
   const featuredEditFilm = filmsQuery.data?.[0];
 
   return (
@@ -53,7 +27,7 @@ export function AdminDashboardPage() {
           <p className="eyebrow eyebrow--dark">Admin dashboard</p>
           <h1>Catalogue operations in one surface.</h1>
           <p className="page-copy">
-            This dashboard keeps catalogue editing, member responses, OMDB sync, and social announcement history in one editorial surface.
+            This dashboard focuses on the required management flow: review the catalogue, create records, edit entries, and remove films.
           </p>
         </div>
       </section>
@@ -109,11 +83,6 @@ export function AdminDashboardPage() {
                 <p className="dashboard-list__meta">{film.genre} · {film.releaseYear}</p>
                 <h3>{film.title}</h3>
                 <p>{film.curatorNote}</p>
-                {film.metadataSyncedAt ? (
-                  <p className="dashboard-list__meta">
-                    OMDB synced {new Date(film.metadataSyncedAt).toLocaleDateString()}
-                  </p>
-                ) : null}
               </div>
 
               <div className="button-row">
@@ -123,14 +92,6 @@ export function AdminDashboardPage() {
                 <Link className="button-link button-link--muted" to={`/admin/films/${film.id}/edit`}>
                   Edit
                 </Link>
-                <button
-                  className="button-link button-link--muted"
-                  disabled={omdbMutation.isPending}
-                  onClick={() => omdbMutation.mutate(film.id)}
-                  type="button"
-                >
-                  {omdbMutation.isPending ? "Syncing..." : "Sync OMDB"}
-                </button>
                 <button
                   className="button-link"
                   disabled={deleteMutation.isPending}
@@ -144,83 +105,6 @@ export function AdminDashboardPage() {
           ))}
         </section>
       ) : null}
-
-      <section className="split-grid">
-        <article className="dashboard-list">
-          <div className="section-header">
-            <div>
-              <p className="eyebrow eyebrow--dark">Member messages</p>
-              <h2>Inbox for direct film-interest requests</h2>
-            </div>
-          </div>
-          {messagesQuery.isLoading ? <section className="status-card">Loading inbox...</section> : null}
-          {messagesQuery.isError ? <section className="status-card status-card--error">Could not load member messages.</section> : null}
-          {!messagesQuery.isLoading && !messagesQuery.isError && messagesQuery.data?.length ? (
-            messagesQuery.data.map((message) => (
-              <article className="message-card" key={message.id}>
-                <div className="message-card__header">
-                  <div>
-                    <p className="dashboard-list__meta">
-                      {message.sender.displayName} · {message.film.title}
-                    </p>
-                    <h3>{message.subject}</h3>
-                  </div>
-                  <span className="message-card__stamp">{message.status}</span>
-                </div>
-                <p>{message.body}</p>
-                {message.adminResponse ? (
-                  <div className="reply-card">
-                    <p className="eyebrow eyebrow--dark">Response sent</p>
-                    <p>{message.adminResponse}</p>
-                  </div>
-                ) : (
-                  <button
-                    className="button-link button-link--muted"
-                    disabled={replyMutation.isPending}
-                    onClick={() =>
-                      replyMutation.mutate({
-                        messageId: message.id,
-                        body: "Thank you for your interest. The editorial team has logged this title for follow-up."
-                      })
-                    }
-                    type="button"
-                  >
-                    {replyMutation.isPending ? "Replying..." : "Send quick reply"}
-                  </button>
-                )}
-              </article>
-            ))
-          ) : null}
-          {!messagesQuery.isLoading && !messagesQuery.isError && !messagesQuery.data?.length ? (
-            <section className="status-card">No member messages have arrived yet.</section>
-          ) : null}
-        </article>
-
-        <article className="dashboard-list">
-          <div className="section-header">
-            <div>
-              <p className="eyebrow eyebrow--dark">Announcement feed</p>
-              <h2>Automatic social post outcomes</h2>
-            </div>
-          </div>
-          {socialQuery.isLoading ? <section className="status-card">Loading social feed...</section> : null}
-          {socialQuery.isError ? <section className="status-card status-card--error">Could not load social post history.</section> : null}
-          {!socialQuery.isLoading && !socialQuery.isError && socialQuery.data?.length ? (
-            socialQuery.data.map((post) => (
-              <article className="dashboard-list__item" key={post.id}>
-                <div>
-                  <p className="dashboard-list__meta">{post.provider} · {post.status}</p>
-                  <h3>{post.film.title}</h3>
-                  <p>{post.responseSummary ?? post.errorMessage ?? "Webhook execution recorded."}</p>
-                </div>
-              </article>
-            ))
-          ) : null}
-          {!socialQuery.isLoading && !socialQuery.isError && !socialQuery.data?.length ? (
-            <section className="status-card">No social announcements have been recorded yet.</section>
-          ) : null}
-        </article>
-      </section>
     </section>
   );
 }

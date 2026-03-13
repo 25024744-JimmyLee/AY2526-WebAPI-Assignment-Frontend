@@ -19,15 +19,6 @@ export function Navbar() {
         <Link className="navbar__link" to="/">
           Browse
         </Link>
-        {isAuthenticated ? (
-          <Link className="navbar__link" to="/account">
-            Account
-          </Link>
-        ) : (
-          <Link className="navbar__link" to="/signup">
-            Sign up
-          </Link>
-        )}
         {isAdmin ? (
           <Link className="navbar__link" to="/admin">
             Admin

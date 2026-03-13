@@ -6,13 +6,10 @@ export type LoginPayload = {
   password: string;
 };
 
-export type RegisterPayload = {
+export type AdminRegisterPayload = {
   email: string;
   password: string;
   displayName: string;
-};
-
-export type AdminRegisterPayload = RegisterPayload & {
   adminCode: string;
 };
 
@@ -27,11 +24,6 @@ type CurrentUserResponse = {
 
 export async function login(payload: LoginPayload) {
   const response = await http.post<AuthResponse>("/api/auth/login", payload);
-  return response.data;
-}
-
-export async function register(payload: RegisterPayload) {
-  const response = await http.post<AuthResponse>("/api/auth/register", payload);
   return response.data;
 }
 

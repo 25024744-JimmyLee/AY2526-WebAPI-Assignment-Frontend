@@ -132,9 +132,9 @@ export function HomePage() {
           <p>The admin area opens after real authentication instead of a token-only shell.</p>
         </article>
         <article className="spotlight-strip__card">
-          <p className="eyebrow eyebrow--dark">Member experience</p>
-          <h3>Account tools extend the catalogue into a personal cinema desk</h3>
-          <p>Members can now save favourites, manage watch status, upload a profile image, and message the administrators.</p>
+          <p className="eyebrow eyebrow--dark">Coursework scope</p>
+          <h3>Public discovery and administrator CRUD stay at the center of the interface</h3>
+          <p>The frontend keeps the required workflow clear: browse films publicly, then enter the protected management area for catalogue updates.</p>
         </article>
       </section>
     </section>

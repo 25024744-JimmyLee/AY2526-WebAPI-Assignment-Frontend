@@ -52,7 +52,7 @@ export function RegisterAdminPage() {
         <p className="eyebrow">Editorial onboarding</p>
         <h1>Register a new administrator workstation.</h1>
         <p className="page-copy page-copy--light">
-          This flow keeps administrator onboarding distinct from public signup while still satisfying the coursework requirement that admins can register and then manage the live catalogue.
+          This flow satisfies the coursework requirement that administrators can register and then manage the live catalogue.
         </p>
         <div className="auth-intro__meta">
           <span>Admin registration</span>

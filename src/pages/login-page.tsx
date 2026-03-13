@@ -38,11 +38,18 @@ export function LoginPage() {
 
     try {
       const response = await login(values);
+
+      if (response.user.role !== "ADMIN") {
+        setServerError("Only administrator accounts can access the management workspace.");
+        return;
+      }
+
       setSession({
         token: response.token,
         user: response.user
       });
-      navigate(redirectTarget ?? (response.user.role === "ADMIN" ? "/admin" : "/account"), { replace: true });
+
+      navigate(redirectTarget ?? "/admin", { replace: true });
     } catch {
       setServerError("Login failed. Start the backend API and verify the credentials.");
     }
@@ -52,14 +59,14 @@ export function LoginPage() {
     <section className="auth-layout">
       <article className="auth-intro">
         <p className="eyebrow">CinemaVault access</p>
-        <h1>Sign in as a member or step into the editorial desk.</h1>
+        <h1>Sign in to the editorial desk.</h1>
         <p className="page-copy page-copy--light">
-          Members track favourites, watch progress, and interest messages. Administrators use the same secure gateway before managing the live catalogue.
+          This entry point is reserved for platform administrators who manage the live catalogue and film records.
         </p>
         <div className="auth-intro__meta">
           <span>JWT login</span>
-          <span>Member account</span>
-          <span>Role-based flow</span>
+          <span>Admin register</span>
+          <span>Protected dashboard</span>
         </div>
       </article>
 
@@ -90,11 +97,7 @@ export function LoginPage() {
         </form>
 
         <p className="inline-text">
-          Need an account?{" "}
-          <Link className="text-link" to="/signup">
-            Member sign up
-          </Link>
-          {" · "}
+          Need admin access?{" "}
           <Link className="text-link" to="/register-admin">
             Admin register
           </Link>
