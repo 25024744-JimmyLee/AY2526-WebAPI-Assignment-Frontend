@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { deleteFilm, listFilms } from "../api/films-api";
+import { deleteMessage, listMessages, replyToMessage } from "../api/messages-api";
 import { useAuth } from "../store/auth-store";
 
 export function AdminDashboardPage() {
@@ -16,6 +17,24 @@ export function AdminDashboardPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["admin-films"] });
       await queryClient.invalidateQueries({ queryKey: ["films"] });
+    }
+  });
+  const messagesQuery = useQuery({
+    queryKey: ["admin-messages"],
+    queryFn: () => listMessages(token ?? ""),
+    enabled: Boolean(token)
+  });
+  const replyMutation = useMutation({
+    mutationFn: ({ messageId, body }: { messageId: string; body: string }) =>
+      replyToMessage(token ?? "", messageId, { body }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-messages"] });
+    }
+  });
+  const deleteMessageMutation = useMutation({
+    mutationFn: (messageId: string) => deleteMessage(token ?? "", messageId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-messages"] });
     }
   });
   const featuredEditFilm = filmsQuery.data?.[0];
@@ -105,6 +124,68 @@ export function AdminDashboardPage() {
           ))}
         </section>
       ) : null}
+
+      <section className="stack">
+        <section className="section-header">
+          <div>
+            <p className="eyebrow eyebrow--dark">Member messages</p>
+            <h2>Inbox for film enquiries</h2>
+          </div>
+        </section>
+        {messagesQuery.isLoading ? <section className="status-card">Loading inbox...</section> : null}
+        {messagesQuery.isError ? <section className="status-card status-card--error">Could not load member messages.</section> : null}
+        {!messagesQuery.isLoading && !messagesQuery.isError && messagesQuery.data?.length ? (
+          <section className="dashboard-list">
+            {messagesQuery.data.map((message) => (
+              <article className="message-card" key={message.id}>
+                <div className="message-card__header">
+                  <div>
+                    <p className="dashboard-list__meta">
+                      {message.sender.displayName} · {message.film.title}
+                    </p>
+                    <h3>{message.subject}</h3>
+                  </div>
+                  <span className="message-card__stamp">{message.status}</span>
+                </div>
+                <p>{message.body}</p>
+                {message.adminResponse ? (
+                  <div className="reply-card">
+                    <p className="eyebrow eyebrow--dark">Response sent</p>
+                    <p>{message.adminResponse}</p>
+                  </div>
+                ) : (
+                  <button
+                    className="button-link button-link--muted"
+                    disabled={replyMutation.isPending}
+                    onClick={() =>
+                      replyMutation.mutate({
+                        messageId: message.id,
+                        body: "Thank you for your message. The editorial team has reviewed your request."
+                      })
+                    }
+                    type="button"
+                  >
+                    {replyMutation.isPending ? "Replying..." : "Send quick reply"}
+                  </button>
+                )}
+                <div className="button-row">
+                  <button
+                    className="button-link button-link--muted"
+                    disabled={deleteMessageMutation.isPending}
+                    onClick={() => deleteMessageMutation.mutate(message.id)}
+                    type="button"
+                  >
+                    {deleteMessageMutation.isPending ? "Deleting..." : "Delete message"}
+                  </button>
+                </div>
+              </article>
+            ))}
+          </section>
+        ) : null}
+        {!messagesQuery.isLoading && !messagesQuery.isError && !messagesQuery.data?.length ? (
+          <section className="status-card">No member messages have arrived yet.</section>
+        ) : null}
+      </section>
     </section>
   );
 }

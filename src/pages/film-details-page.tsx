@@ -1,14 +1,34 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { getFilm } from "../api/films-api";
+import { createMessage } from "../api/messages-api";
+import { useAuth } from "../store/auth-store";
 
 export function FilmDetailsPage() {
   const { filmId } = useParams();
+  const { isAuthenticated, token, user } = useAuth();
+  const queryClient = useQueryClient();
+  const [messageSubject, setMessageSubject] = useState("");
+  const [messageBody, setMessageBody] = useState("");
   const filmQuery = useQuery({
     queryKey: ["film", filmId],
     queryFn: () => getFilm(filmId ?? ""),
     enabled: Boolean(filmId)
+  });
+  const messageMutation = useMutation({
+    mutationFn: () =>
+      createMessage(token ?? "", {
+        filmId: filmId ?? "",
+        subject: messageSubject,
+        body: messageBody
+      }),
+    onSuccess: async () => {
+      setMessageSubject("");
+      setMessageBody("");
+      await queryClient.invalidateQueries({ queryKey: ["messages"] });
+    }
   });
 
   if (filmQuery.isLoading) {
@@ -57,6 +77,43 @@ export function FilmDetailsPage() {
             <h2>Curator note</h2>
             <p>{film.curatorNote}</p>
           </div>
+
+          {isAuthenticated && user?.role === "USER" ? (
+            <div className="detail-section">
+              <h2>Message the administrator</h2>
+              <p>Use this form to ask the editorial team about this film or request more coverage.</p>
+              <div className="stack detail-form">
+                <label>
+                  <span>Subject</span>
+                  <input
+                    onChange={(event) => setMessageSubject(event.target.value)}
+                    placeholder="Why this title matters to you"
+                    type="text"
+                    value={messageSubject}
+                  />
+                </label>
+                <label>
+                  <span>Message</span>
+                  <textarea
+                    onChange={(event) => setMessageBody(event.target.value)}
+                    placeholder="Tell the administrators what you want to know or why this film deserves attention."
+                    rows={5}
+                    value={messageBody}
+                  />
+                </label>
+                <button
+                  className="button-link"
+                  disabled={messageMutation.isPending || messageSubject.trim().length < 4 || messageBody.trim().length < 10}
+                  onClick={() => messageMutation.mutate()}
+                  type="button"
+                >
+                  {messageMutation.isPending ? "Sending..." : "Send message"}
+                </button>
+                {messageMutation.isSuccess ? <p className="status-inline">Message sent to the administrator.</p> : null}
+                {messageMutation.isError ? <p className="error-text">Could not send your message.</p> : null}
+              </div>
+            </div>
+          ) : null}
         </article>
       </section>
     </section>
