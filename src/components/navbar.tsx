@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../store/auth-store";
 
 export function Navbar() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
 
   return (
     <header className="navbar">
@@ -21,6 +21,7 @@ export function Navbar() {
         <Link className="navbar__link" to="/admin">
           Admin
         </Link>
+        {user ? <span className="navbar__user">{user.displayName}</span> : null}
         {isAuthenticated ? (
           <button className="button-link" onClick={logout} type="button">
             Logout

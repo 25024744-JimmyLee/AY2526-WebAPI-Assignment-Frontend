@@ -120,6 +120,11 @@ input {
   font-weight: 600;
 }
 
+.navbar__user {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
 .button-link {
   text-decoration: none;
   border: none;
@@ -439,7 +444,8 @@ input {
 .auth-layout,
 .admin-actions,
 .editor-form,
-.dashboard-grid {
+.dashboard-grid,
+.dashboard-list {
   display: grid;
   gap: 1.25rem;
 }
@@ -588,7 +594,9 @@ input {
 
 .admin-action-card,
 .editor-panel,
-.not-found-card {
+.not-found-card,
+.status-card,
+.dashboard-list__item {
   display: grid;
   gap: 0.85rem;
 }
@@ -619,6 +627,38 @@ input {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.status-card {
+  padding: 1.1rem 1.2rem;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  box-shadow: var(--shadow-card);
+}
+
+.status-card--error {
+  color: #8c1d3f;
+}
+
+.dashboard-list__item {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 1.25rem;
+  border-radius: 24px;
+  background: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  box-shadow: var(--shadow-card);
+}
+
+.dashboard-list__meta {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.status-inline {
+  color: #256b3f;
+  font-weight: 700;
 }
 
 .error-text,
@@ -669,7 +709,8 @@ h3 {
   .auth-layout,
   .dashboard-grid,
   .admin-actions,
-  .editor-form {
+  .editor-form,
+  .dashboard-list__item {
     grid-template-columns: 1fr;
   }
 

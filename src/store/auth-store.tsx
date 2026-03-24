@@ -1,15 +1,20 @@
 import { createContext, ReactNode, useContext, useState } from "react";
 
+import type { AuthUser } from "../types/auth";
+
 type AuthContextValue = {
   isAuthenticated: boolean;
   token: string | null;
-  setToken: (value: string) => void;
+  user: AuthUser | null;
+  setSession: (value: { token: string; user: AuthUser }) => void;
+  setUser: (value: AuthUser | null) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const storageKey = "cinemavault-token";
+const userStorageKey = "cinemavault-user";
 
 type AuthProviderProps = {
   children: ReactNode;
@@ -17,16 +22,45 @@ type AuthProviderProps = {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [token, setTokenState] = useState<string | null>(() => localStorage.getItem(storageKey));
+  const [user, setUserState] = useState<AuthUser | null>(() => {
+    const rawValue = localStorage.getItem(userStorageKey);
+
+    if (!rawValue) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawValue) as AuthUser;
+    } catch {
+      localStorage.removeItem(userStorageKey);
+      return null;
+    }
+  });
+
   const value: AuthContextValue = {
     isAuthenticated: Boolean(token),
     token,
-    setToken: (value) => {
-      localStorage.setItem(storageKey, value);
-      setTokenState(value);
+    user,
+    setSession: (value) => {
+      localStorage.setItem(storageKey, value.token);
+      localStorage.setItem(userStorageKey, JSON.stringify(value.user));
+      setTokenState(value.token);
+      setUserState(value.user);
+    },
+    setUser: (value) => {
+      if (value) {
+        localStorage.setItem(userStorageKey, JSON.stringify(value));
+      } else {
+        localStorage.removeItem(userStorageKey);
+      }
+
+      setUserState(value);
     },
     logout: () => {
       localStorage.removeItem(storageKey);
+      localStorage.removeItem(userStorageKey);
       setTokenState(null);
+      setUserState(null);
     }
   };
 

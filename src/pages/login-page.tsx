@@ -17,7 +17,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setToken } = useAuth();
+  const { setSession } = useAuth();
   const [serverError, setServerError] = useState("");
   const redirectTarget = (location.state as { from?: string } | null)?.from ?? "/admin";
 
@@ -38,7 +38,10 @@ export function LoginPage() {
 
     try {
       const response = await login(values);
-      setToken(response.token);
+      setSession({
+        token: response.token,
+        user: response.user
+      });
       navigate(redirectTarget, { replace: true });
     } catch {
       setServerError("Login failed. Start the backend API and verify the credentials.");

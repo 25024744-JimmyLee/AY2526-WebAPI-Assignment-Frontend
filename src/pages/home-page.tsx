@@ -1,66 +1,23 @@
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import { listFilms } from "../api/films-api";
 import { FilmCard } from "../components/film-card";
-import type { Film } from "../types/film";
-
-const sampleFilms: Film[] = [
-  {
-    id: "film-1",
-    title: "In the Mood for Noir",
-    synopsis: "A quiet city mystery told through fragmented memories and vanished reels.",
-    genre: "Mystery",
-    releaseYear: 2024,
-    rating: 8.8,
-    runtimeMinutes: 118,
-    curatorNote: "Slow-burn atmosphere"
-  },
-  {
-    id: "film-2",
-    title: "Skyline Archive",
-    synopsis: "An archivist uncovers a hidden catalogue of banned science-fiction classics.",
-    genre: "Sci-Fi",
-    releaseYear: 2023,
-    rating: 8.4,
-    runtimeMinutes: 132,
-    curatorNote: "World-building standout"
-  },
-  {
-    id: "film-3",
-    title: "Red Lantern District",
-    synopsis: "A stylised crime drama where every witness remembers the night differently.",
-    genre: "Crime",
-    releaseYear: 2022,
-    rating: 8.1,
-    runtimeMinutes: 124,
-    curatorNote: "Visual signature"
-  },
-  {
-    id: "film-4",
-    title: "Glass Harbor",
-    synopsis: "A coastal family saga about inheritance, ambition, and a cinema about to disappear.",
-    genre: "Drama",
-    releaseYear: 2021,
-    rating: 7.9,
-    runtimeMinutes: 109,
-    curatorNote: "Festival favourite"
-  }
-];
 
 const genreOptions = ["All", "Mystery", "Sci-Fi", "Crime", "Drama"];
 
 export function HomePage() {
   const [keyword, setKeyword] = useState("");
   const [activeGenre, setActiveGenre] = useState("All");
-  const normalizedKeyword = keyword.trim().toLowerCase();
-  const visibleFilms = sampleFilms.filter((film) => {
-    const matchesKeyword =
-      !normalizedKeyword ||
-      film.title.toLowerCase().includes(normalizedKeyword) ||
-      film.genre.toLowerCase().includes(normalizedKeyword);
-    const matchesGenre = activeGenre === "All" || film.genre === activeGenre;
-
-    return matchesKeyword && matchesGenre;
+  const normalizedKeyword = keyword.trim();
+  const filmsQuery = useQuery({
+    queryKey: ["films", normalizedKeyword, activeGenre],
+    queryFn: () =>
+      listFilms({
+        title: normalizedKeyword || undefined,
+        genre: activeGenre
+      })
   });
 
   return (
@@ -85,28 +42,35 @@ export function HomePage() {
           <div className="hero__stats">
             <article className="stat-card">
               <span>Collection</span>
-              <strong>240+</strong>
-              <p>Archive-ready titles across public and editorial views.</p>
+              <strong>{filmsQuery.data?.length ?? "..."}</strong>
+              <p>Live catalogue entries coming directly from the backend film index.</p>
             </article>
             <article className="stat-card">
               <span>Discovery</span>
               <strong>Fast search</strong>
-              <p>Keyword and genre entry points for a cleaner first impression.</p>
+              <p>Keyword and genre filters now query the real `/api/films` endpoint.</p>
             </article>
           </div>
         </div>
 
         <aside className="hero-panel">
           <p className="hero-panel__label">Tonight's spotlight</p>
-          <h2>Skyline Archive</h2>
-          <p>
-            An elegant sci-fi indexer with enough intrigue to suggest the product already knows how to curate, not just store.
-          </p>
-          <div className="hero-panel__meta">
-            <span>8.4 rating</span>
-            <span>132 min</span>
-            <span>Admin-ready</span>
-          </div>
+          {filmsQuery.data?.[0] ? (
+            <>
+              <h2>{filmsQuery.data[0].title}</h2>
+              <p>{filmsQuery.data[0].synopsis}</p>
+              <div className="hero-panel__meta">
+                <span>{filmsQuery.data[0].rating.toFixed(1)} rating</span>
+                <span>{filmsQuery.data[0].runtimeMinutes} min</span>
+                <span>{filmsQuery.data[0].genre}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2>Archive offline</h2>
+              <p>Start the backend API to surface the current catalogue here.</p>
+            </>
+          )}
         </aside>
       </section>
 
@@ -141,25 +105,36 @@ export function HomePage() {
           <p className="eyebrow eyebrow--dark">Featured collection</p>
           <h2>Public browsing with stronger visual hierarchy</h2>
         </div>
-        <p>{visibleFilms.length} visible title(s)</p>
+        <p>{filmsQuery.data?.length ?? 0} visible title(s)</p>
       </section>
 
-      <div className="grid">
-        {visibleFilms.map((film) => (
-          <FilmCard film={film} key={film.id} />
-        ))}
-      </div>
+      {filmsQuery.isLoading ? <section className="status-card">Loading current collection...</section> : null}
+      {filmsQuery.isError ? (
+        <section className="status-card status-card--error">
+          Could not load films from the API. Check that the backend is running on `http://127.0.0.1:4000`.
+        </section>
+      ) : null}
+      {!filmsQuery.isLoading && !filmsQuery.isError && filmsQuery.data?.length === 0 ? (
+        <section className="status-card">No films match the current filters.</section>
+      ) : null}
+      {!filmsQuery.isLoading && !filmsQuery.isError && filmsQuery.data && filmsQuery.data.length > 0 ? (
+        <div className="grid">
+          {filmsQuery.data.map((film) => (
+            <FilmCard film={film} key={film.id} />
+          ))}
+        </div>
+      ) : null}
 
       <section className="spotlight-strip">
         <article className="spotlight-strip__card">
           <p className="eyebrow eyebrow--dark">Admin flow</p>
-          <h3>Protected routes are already in place</h3>
-          <p>The visual shell makes the management area feel like part of the same product, not a disconnected back office.</p>
+          <h3>Protected routes now sit on top of a live login flow</h3>
+          <p>The admin area opens after real authentication instead of a token-only shell.</p>
         </article>
         <article className="spotlight-strip__card">
           <p className="eyebrow eyebrow--dark">Next step</p>
-          <h3>Connect live catalogue data</h3>
-          <p>Once `/api/films` is implemented, this layout can switch from sample records to live query-driven cards with minimal rework.</p>
+          <h3>Editorial forms are wired for create and edit</h3>
+          <p>The remaining work is mostly backend persistence, not frontend plumbing.</p>
         </article>
       </section>
     </section>

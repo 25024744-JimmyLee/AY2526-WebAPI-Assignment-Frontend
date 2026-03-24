@@ -1,6 +1,24 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
+import { deleteFilm, listFilms } from "../api/films-api";
+import { useAuth } from "../store/auth-store";
+
 export function AdminDashboardPage() {
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
+  const filmsQuery = useQuery({
+    queryKey: ["admin-films"],
+    queryFn: () => listFilms()
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (filmId: string) => deleteFilm(token ?? "", filmId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-films"] });
+      await queryClient.invalidateQueries({ queryKey: ["films"] });
+    }
+  });
+
   return (
     <section className="stack">
       <section className="page-hero">
@@ -16,18 +34,18 @@ export function AdminDashboardPage() {
       <section className="dashboard-grid">
         <article className="dashboard-card dashboard-card--accent">
           <span>Titles tracked</span>
-          <strong>240</strong>
-          <p>Current archive size shown here with a placeholder metric for the final API count.</p>
+          <strong>{filmsQuery.data?.length ?? "..."}</strong>
+          <p>Live catalogue count driven by the backend film list endpoint.</p>
         </article>
         <article className="dashboard-card">
           <span>Draft updates</span>
-          <strong>12</strong>
-          <p>Pending metadata revisions and content adjustments across the collection.</p>
+          <strong>{filmsQuery.data?.slice(0, 3).length ?? 0}</strong>
+          <p>Use edit routes to refine synopsis, runtime, rating, and curator framing.</p>
         </article>
         <article className="dashboard-card">
           <span>Response health</span>
-          <strong>API ready</strong>
-          <p>Current frontend shell already aligns with the planned auth and films endpoints.</p>
+          <strong>{filmsQuery.isError ? "Check API" : "Connected"}</strong>
+          <p>The dashboard reads real data and invalidates queries after create, update, and delete.</p>
         </article>
       </section>
 
@@ -48,6 +66,42 @@ export function AdminDashboardPage() {
           </Link>
         </article>
       </section>
+
+      {filmsQuery.isLoading ? <section className="status-card">Loading current catalogue...</section> : null}
+      {filmsQuery.isError ? <section className="status-card status-card--error">Could not load admin catalogue data.</section> : null}
+      {!filmsQuery.isLoading && !filmsQuery.isError && filmsQuery.data?.length === 0 ? (
+        <section className="status-card">No films are available yet.</section>
+      ) : null}
+      {!filmsQuery.isLoading && !filmsQuery.isError && filmsQuery.data && filmsQuery.data.length > 0 ? (
+        <section className="dashboard-list">
+          {filmsQuery.data.map((film) => (
+            <article className="dashboard-list__item" key={film.id}>
+              <div>
+                <p className="dashboard-list__meta">{film.genre} · {film.releaseYear}</p>
+                <h3>{film.title}</h3>
+                <p>{film.curatorNote}</p>
+              </div>
+
+              <div className="button-row">
+                <Link className="button-link button-link--muted" to={`/films/${film.id}`}>
+                  View
+                </Link>
+                <Link className="button-link button-link--muted" to={`/admin/films/${film.id}/edit`}>
+                  Edit
+                </Link>
+                <button
+                  className="button-link"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => deleteMutation.mutate(film.id)}
+                  type="button"
+                >
+                  {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : null}
     </section>
   );
 }
