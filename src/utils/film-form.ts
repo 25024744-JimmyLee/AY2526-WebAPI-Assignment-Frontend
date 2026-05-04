@@ -9,7 +9,11 @@ export const filmFormSchema = z.object({
   releaseYear: z.coerce.number().int().min(1888).max(2100),
   rating: z.coerce.number().min(0).max(10),
   runtimeMinutes: z.coerce.number().int().min(1).max(500),
-  curatorNote: z.string().min(2, "Curator note is required")
+  curatorNote: z.string().min(2, "Curator note is required"),
+  posterUrl: z.string().url("Use a valid poster URL").or(z.literal("")).optional(),
+  omdbId: z.string().optional(),
+  cast: z.string().optional(),
+  externalRating: z.string().optional()
 });
 
 export type FilmFormValues = z.infer<typeof filmFormSchema>;
@@ -21,7 +25,11 @@ export const emptyFilmFormValues: FilmFormValues = {
   releaseYear: new Date().getFullYear(),
   rating: 8,
   runtimeMinutes: 120,
-  curatorNote: ""
+  curatorNote: "",
+  posterUrl: "",
+  omdbId: "",
+  cast: "",
+  externalRating: ""
 };
 
 export function mapFilmToFormValues(payload: FilmPayload): FilmFormValues {
@@ -32,6 +40,10 @@ export function mapFilmToFormValues(payload: FilmPayload): FilmFormValues {
     releaseYear: payload.releaseYear,
     rating: payload.rating,
     runtimeMinutes: payload.runtimeMinutes,
-    curatorNote: payload.curatorNote
+    curatorNote: payload.curatorNote,
+    posterUrl: payload.posterUrl ?? "",
+    omdbId: payload.omdbId ?? "",
+    cast: payload.cast ?? "",
+    externalRating: payload.externalRating ?? ""
   };
 }

@@ -2,9 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 
+import { addFavourite, listFavourites, removeFavourite } from "../api/favourites-api";
 import { getFilm } from "../api/films-api";
 import { createMessage } from "../api/messages-api";
 import { useAuth } from "../store/auth-store";
+import { resolveAssetUrl } from "../utils/asset-url";
 
 export function FilmDetailsPage() {
   const { filmId } = useParams();
@@ -16,6 +18,11 @@ export function FilmDetailsPage() {
     queryKey: ["film", filmId],
     queryFn: () => getFilm(filmId ?? ""),
     enabled: Boolean(filmId)
+  });
+  const favouritesQuery = useQuery({
+    queryKey: ["favourites"],
+    queryFn: () => listFavourites(token ?? ""),
+    enabled: Boolean(token && user?.role === "USER")
   });
   const messageMutation = useMutation({
     mutationFn: () =>
@@ -30,6 +37,23 @@ export function FilmDetailsPage() {
       await queryClient.invalidateQueries({ queryKey: ["messages"] });
     }
   });
+  const favouriteMutation = useMutation({
+    mutationFn: async () => {
+      if (!filmId) {
+        return;
+      }
+
+      const isFavourite = favouritesQuery.data?.some((favourite) => favourite.film.id === filmId);
+      if (isFavourite) {
+        await removeFavourite(token ?? "", filmId);
+      } else {
+        await addFavourite(token ?? "", filmId);
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["favourites"] });
+    }
+  });
 
   if (filmQuery.isLoading) {
     return <section className="status-card">Loading film details...</section>;
@@ -40,6 +64,7 @@ export function FilmDetailsPage() {
   }
 
   const film = filmQuery.data;
+  const isFavourite = favouritesQuery.data?.some((favourite) => favourite.film.id === film.id) ?? false;
 
   return (
     <section className="stack">
@@ -49,15 +74,19 @@ export function FilmDetailsPage() {
           <h1>{film.title}</h1>
           <p className="page-copy">{film.synopsis}</p>
         </div>
-        <div className="page-hero__badge">ID: {film.id}</div>
+        <div className="page-hero__badge">{film.externalRating ?? `ID: ${film.id}`}</div>
       </section>
 
       <section className="detail-layout">
         <article className="detail-poster">
-          <div className="detail-poster__frame">
-            <span>Featured still</span>
-            <strong>2.39:1</strong>
-          </div>
+          {film.posterUrl ? (
+            <img className="detail-poster__image" src={resolveAssetUrl(film.posterUrl)} alt={`${film.title} poster`} />
+          ) : (
+            <div className="detail-poster__frame">
+              <span>Featured still</span>
+              <strong>2.39:1</strong>
+            </div>
+          )}
         </article>
 
         <article className="detail-content">
@@ -77,6 +106,27 @@ export function FilmDetailsPage() {
             <h2>Curator note</h2>
             <p>{film.curatorNote}</p>
           </div>
+
+          {film.cast ? (
+            <div className="detail-section">
+              <h2>Cast</h2>
+              <p>{film.cast}</p>
+            </div>
+          ) : null}
+
+          {isAuthenticated && user?.role === "USER" ? (
+            <div className="detail-section">
+              <h2>Watchlist</h2>
+              <button
+                className="button-link button-link--muted"
+                disabled={favouriteMutation.isPending || favouritesQuery.isLoading}
+                onClick={() => favouriteMutation.mutate()}
+                type="button"
+              >
+                {isFavourite ? "Remove from favourites" : "Add to favourites"}
+              </button>
+            </div>
+          ) : null}
 
           {isAuthenticated && user?.role === "USER" ? (
             <div className="detail-section">

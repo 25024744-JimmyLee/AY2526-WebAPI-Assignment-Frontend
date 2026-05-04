@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { deleteFilm, listFilms } from "../api/films-api";
@@ -8,6 +9,7 @@ import { useAuth } from "../store/auth-store";
 export function AdminDashboardPage() {
   const { token } = useAuth();
   const queryClient = useQueryClient();
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const filmsQuery = useQuery({
     queryKey: ["admin-films"],
     queryFn: () => listFilms()
@@ -27,7 +29,12 @@ export function AdminDashboardPage() {
   const replyMutation = useMutation({
     mutationFn: ({ messageId, body }: { messageId: string; body: string }) =>
       replyToMessage(token ?? "", messageId, { body }),
-    onSuccess: async () => {
+    onSuccess: async (message) => {
+      setReplyDrafts((currentDrafts) => {
+        const nextDrafts = { ...currentDrafts };
+        delete nextDrafts[message.id];
+        return nextDrafts;
+      });
       await queryClient.invalidateQueries({ queryKey: ["admin-messages"] });
     }
   });
@@ -154,19 +161,35 @@ export function AdminDashboardPage() {
                     <p>{message.adminResponse}</p>
                   </div>
                 ) : (
-                  <button
-                    className="button-link button-link--muted"
-                    disabled={replyMutation.isPending}
-                    onClick={() =>
-                      replyMutation.mutate({
-                        messageId: message.id,
-                        body: "Thank you for your message. The editorial team has reviewed your request."
-                      })
-                    }
-                    type="button"
-                  >
-                    {replyMutation.isPending ? "Replying..." : "Send quick reply"}
-                  </button>
+                  <div className="reply-form">
+                    <label>
+                      <span>Admin response</span>
+                      <textarea
+                        onChange={(event) =>
+                          setReplyDrafts((currentDrafts) => ({
+                            ...currentDrafts,
+                            [message.id]: event.target.value
+                          }))
+                        }
+                        placeholder="Write a response for this member"
+                        rows={4}
+                        value={replyDrafts[message.id] ?? ""}
+                      />
+                    </label>
+                    <button
+                      className="button-link button-link--muted"
+                      disabled={replyMutation.isPending || (replyDrafts[message.id] ?? "").trim().length < 4}
+                      onClick={() =>
+                        replyMutation.mutate({
+                          messageId: message.id,
+                          body: (replyDrafts[message.id] ?? "").trim()
+                        })
+                      }
+                      type="button"
+                    >
+                      {replyMutation.isPending ? "Replying..." : "Send response"}
+                    </button>
+                  </div>
                 )}
                 <div className="button-row">
                   <button

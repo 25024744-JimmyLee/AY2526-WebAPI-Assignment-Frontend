@@ -7,16 +7,33 @@ import { FilmCard } from "../components/film-card";
 
 const genreOptions = ["All", "Mystery", "Sci-Fi", "Crime", "Drama"];
 
+function parseOptionalNumber(value: string) {
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return undefined;
+  }
+
+  const parsedValue = Number(normalizedValue);
+  return Number.isFinite(parsedValue) ? parsedValue : undefined;
+}
+
 export function HomePage() {
   const [keyword, setKeyword] = useState("");
   const [activeGenre, setActiveGenre] = useState("All");
+  const [yearFilter, setYearFilter] = useState("");
+  const [ratingFilter, setRatingFilter] = useState("");
   const normalizedKeyword = keyword.trim();
+  const releaseYear = parseOptionalNumber(yearFilter);
+  const rating = parseOptionalNumber(ratingFilter);
   const filmsQuery = useQuery({
-    queryKey: ["films", normalizedKeyword, activeGenre],
+    queryKey: ["films", normalizedKeyword, activeGenre, releaseYear, rating],
     queryFn: () =>
       listFilms({
         title: normalizedKeyword || undefined,
-        genre: activeGenre
+        genre: activeGenre,
+        year: releaseYear,
+        rating
       })
   });
 
@@ -47,8 +64,8 @@ export function HomePage() {
             </article>
             <article className="stat-card">
               <span>Discovery</span>
-              <strong>Fast search</strong>
-              <p>Keyword and genre filters now query the real `/api/films` endpoint.</p>
+              <strong>Four filters</strong>
+              <p>Keyword, genre, year, and rating controls query the real `/api/films` endpoint.</p>
             </article>
           </div>
         </div>
@@ -79,11 +96,37 @@ export function HomePage() {
           <span>Search films</span>
           <input
             onChange={(event) => setKeyword(event.target.value)}
-            placeholder="Search by title or genre"
+            placeholder="Search by title"
             type="search"
             value={keyword}
           />
         </label>
+
+        <div className="filter-grid" aria-label="Year and rating filters">
+          <label className="search-box">
+            <span>Release year</span>
+            <input
+              max="2100"
+              min="1888"
+              onChange={(event) => setYearFilter(event.target.value)}
+              placeholder="e.g. 2024"
+              type="number"
+              value={yearFilter}
+            />
+          </label>
+          <label className="search-box">
+            <span>Rating</span>
+            <input
+              max="10"
+              min="0"
+              onChange={(event) => setRatingFilter(event.target.value)}
+              placeholder="e.g. 8"
+              step="0.1"
+              type="number"
+              value={ratingFilter}
+            />
+          </label>
+        </div>
 
         <div className="chip-row" role="tablist" aria-label="Genre filters">
           {genreOptions.map((genre) => (

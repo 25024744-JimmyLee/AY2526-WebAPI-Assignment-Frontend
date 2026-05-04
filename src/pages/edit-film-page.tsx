@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 
 import { getFilm, updateFilm } from "../api/films-api";
+import { lookupOmdbFilm } from "../api/omdb-api";
 import { useAuth } from "../store/auth-store";
 import { filmFormSchema, mapFilmToFormValues, type FilmFormValues } from "../utils/film-form";
 
@@ -21,7 +22,9 @@ export function EditFilmPage() {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
-    reset
+    reset,
+    setValue,
+    watch
   } = useForm<FilmFormValues>({
     resolver: zodResolver(filmFormSchema)
   });
@@ -32,6 +35,29 @@ export function EditFilmPage() {
       await queryClient.invalidateQueries({ queryKey: ["film", filmId] });
       await queryClient.invalidateQueries({ queryKey: ["films"] });
       await queryClient.invalidateQueries({ queryKey: ["admin-films"] });
+    }
+  });
+  const lookupTitle = watch("title") ?? "";
+  const omdbMutation = useMutation({
+    mutationFn: () => lookupOmdbFilm(token ?? "", lookupTitle),
+    onSuccess: (metadata) => {
+      setValue("title", metadata.title, { shouldValidate: true });
+      if (metadata.genre) {
+        setValue("genre", metadata.genre, { shouldValidate: true });
+      }
+      if (metadata.releaseYear) {
+        setValue("releaseYear", metadata.releaseYear, { shouldValidate: true });
+      }
+      if (metadata.runtimeMinutes) {
+        setValue("runtimeMinutes", metadata.runtimeMinutes, { shouldValidate: true });
+      }
+      if (metadata.synopsis) {
+        setValue("synopsis", metadata.synopsis, { shouldValidate: true });
+      }
+      setValue("posterUrl", metadata.posterUrl ?? "", { shouldValidate: true });
+      setValue("omdbId", metadata.omdbId, { shouldValidate: true });
+      setValue("cast", metadata.cast ?? "", { shouldValidate: true });
+      setValue("externalRating", metadata.externalRating ?? "", { shouldValidate: true });
     }
   });
 
@@ -68,6 +94,15 @@ export function EditFilmPage() {
       <form className="editor-form" onSubmit={onSubmit}>
         <section className="editor-panel">
           <h2>Current metadata</h2>
+          <button
+            className="button-link button-link--muted"
+            disabled={omdbMutation.isPending || lookupTitle.trim().length < 2}
+            onClick={() => omdbMutation.mutate()}
+            type="button"
+          >
+            {omdbMutation.isPending ? "Fetching OMDB..." : "Refresh from OMDB"}
+          </button>
+          {omdbMutation.isError ? <p className="error-text">Could not fetch OMDB metadata. Check the API key.</p> : null}
           <label>
             <span>Title</span>
             <input {...register("title")} type="text" />
@@ -106,6 +141,23 @@ export function EditFilmPage() {
             <span>Curator note</span>
             <textarea {...register("curatorNote")} rows={4} />
             {errors.curatorNote ? <small>{errors.curatorNote.message}</small> : null}
+          </label>
+          <label>
+            <span>Poster URL</span>
+            <input {...register("posterUrl")} type="url" />
+            {errors.posterUrl ? <small>{errors.posterUrl.message}</small> : null}
+          </label>
+          <label>
+            <span>OMDB ID</span>
+            <input {...register("omdbId")} type="text" />
+          </label>
+          <label>
+            <span>Cast</span>
+            <textarea {...register("cast")} rows={3} />
+          </label>
+          <label>
+            <span>External rating</span>
+            <input {...register("externalRating")} type="text" />
           </label>
         </section>
 

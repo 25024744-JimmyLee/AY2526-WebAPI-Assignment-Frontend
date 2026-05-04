@@ -8,6 +8,10 @@ export type Film = {
   rating: number;
   runtimeMinutes: number;
   curatorNote: string;
+  posterUrl?: string | null;
+  omdbId?: string | null;
+  cast?: string | null;
+  externalRating?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -27,4 +31,8 @@ export type FilmPayload = {
   rating: number;
   runtimeMinutes: number;
   curatorNote: string;
+  posterUrl?: string | null;
+  omdbId?: string | null;
+  cast?: string | null;
+  externalRating?: string | null;
 };

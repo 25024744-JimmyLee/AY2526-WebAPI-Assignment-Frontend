@@ -4,3 +4,23 @@ dist
 .env.local
 coverage
 *.tsbuildinfo
+logs/
+vite.config.js
+vite.config.d.ts
+6003CEM-2526 Assignment Brief*.pdf
+
+# AI workspace/tooling state
+.serena/
+.ai-workspace/
+.codex/
+.claude/
+.cursor/
+.windsurf/
+AGENTS.md
+CLAUDE.md
+
+# Local documentation artifacts
+*.pdf
+*.doc
+*.docx
+docs/

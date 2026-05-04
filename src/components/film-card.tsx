@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import type { Film } from "../types/film";
+import { resolveAssetUrl } from "../utils/asset-url";
 
 type FilmCardProps = {
   film: Film;
@@ -9,6 +10,9 @@ type FilmCardProps = {
 export function FilmCard({ film }: FilmCardProps) {
   return (
     <article className="film-card">
+      {film.posterUrl ? (
+        <img className="film-card__poster" src={resolveAssetUrl(film.posterUrl)} alt={`${film.title} poster`} />
+      ) : null}
       <div className="film-card__topline">
         <p className="film-card__meta">{film.genre} · {film.releaseYear}</p>
         {film.rating ? <span className="film-card__rating">{film.rating.toFixed(1)}</span> : null}
